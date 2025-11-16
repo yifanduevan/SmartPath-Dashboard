@@ -9,20 +9,12 @@ A small full-stack dashboard that surfaces routing state and metrics from the Sm
 
 ## Quickstart
 
-### Terminal 1 – backend
+### Run frontend and backend conccurently
 ```bash
-cd smart-path-dashboard/backend
-npm install
+npm install 
+npm run install:all  
 npm run dev
 ```
-
-### Terminal 2 – frontend
-```bash
-cd smart-path-dashboard/frontend
-npm install
-npm run dev
-```
-
 Then open http://localhost:5173.
 
 ## Environment Variables
