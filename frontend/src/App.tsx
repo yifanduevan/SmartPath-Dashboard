@@ -7,50 +7,38 @@ import { MetricsCharts } from './components/MetricsCharts';
 import { Toolbar } from './components/Toolbar';
 import { useMetrics } from './hooks/useMetrics';
 import { useStatus } from './hooks/useStatus';
-import type { BackendInfo } from './types';
-
-type HistoryPoint = { time: string; p95: number; p99: number; slo: number };
-
-const HISTORY_LIMIT = 30;
 
 function App() {
   const statusQuery = useStatus();
   const metricsQuery = useMetrics();
-  const [latencyHistory, setLatencyHistory] = useState<HistoryPoint[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [selectedBackendId, setSelectedBackendId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (metricsQuery.data) {
-      const now = new Date();
-      setLatencyHistory((prev) => {
-        const next: HistoryPoint[] = [
-          ...prev,
-          {
-            time: now.toLocaleTimeString(),
-            p95: metricsQuery.data.p95LatencyMs,
-            p99: metricsQuery.data.p99LatencyMs,
-            slo: metricsQuery.data.sloLatencyMs,
-          },
-        ];
-        return next.slice(-HISTORY_LIMIT);
-      });
-      setLastUpdated(now);
-    }
-  }, [metricsQuery.data]);
-
-  useEffect(() => {
-    if (statusQuery.data) {
+      setLastUpdated(new Date(metricsQuery.data.timestamp * 1000));
+    } else if (statusQuery.data) {
       setLastUpdated(new Date());
     }
-  }, [statusQuery.data]);
+  }, [metricsQuery.data, statusQuery.data]);
 
-  const activeBackend: BackendInfo | undefined = useMemo(() => {
-    const backends = statusQuery.data?.backends ?? [];
-    return backends.find((backend) => backend.id === statusQuery.data?.activeBackend);
-  }, [statusQuery.data]);
+  useEffect(() => {
+    const active = statusQuery.data?.backends.filter((b) => b.status === 'Healthy') ?? [];
+    if (active.length === 0) {
+      setSelectedBackendId(undefined);
+      return;
+    }
+    if (!selectedBackendId || !active.some((b) => b.id === selectedBackendId)) {
+      setSelectedBackendId(active[0].id);
+    }
+  }, [statusQuery.data, selectedBackendId]);
 
   const isInitialLoading = statusQuery.isLoading && metricsQuery.isLoading && !statusQuery.data && !metricsQuery.data;
   const hasError = statusQuery.isError || metricsQuery.isError;
+  const activeBackends = useMemo(
+    () => (statusQuery.data?.backends ?? []).filter((b) => b.status === 'Healthy'),
+    [statusQuery.data?.backends]
+  );
 
   if (isInitialLoading) {
     return (
@@ -66,14 +54,15 @@ function App() {
     <div className="app">
       <Header />
       <Toolbar lastUpdated={lastUpdated} hasError={hasError} />
-      <MetricsCards activeBackend={activeBackend} metrics={metricsQuery.data} />
-      <BackendGrid
-        activeBackend={statusQuery.data?.activeBackend ?? '—'}
-        backends={statusQuery.data?.backends ?? []}
+      <MetricsCards
+        activeBackends={activeBackends}
+        selectedBackendId={selectedBackendId}
+        onSelectBackend={setSelectedBackendId}
+        metrics={metricsQuery.data}
       />
+      <BackendGrid backends={statusQuery.data?.backends ?? []} />
       <MetricsCharts
-        latencyHistory={latencyHistory}
-        routeDistribution={metricsQuery.data?.routeDistribution}
+        sysdigMetrics={metricsQuery.data?.sysdig_metrics}
       />
     </div>
   );

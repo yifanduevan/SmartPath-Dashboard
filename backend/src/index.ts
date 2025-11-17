@@ -5,7 +5,7 @@ import express, { Request, Response } from 'express';
 
 dotenv.config();
 
-type BackendStatus = 'Healthy' | 'Idle' | 'Degraded' | 'Unknown';
+type BackendStatus = 'Healthy' | 'Error';
 
 interface BackendInfo {
   id: string;
@@ -31,9 +31,34 @@ interface MetricsResponse {
   routeDistribution: Record<string, number>;
 }
 
+interface ManagingStatusResponse {
+  backend_status: Record<string, boolean>;
+  health: Record<
+    string,
+    {
+      healthy?: {
+        healthy?: boolean;
+      };
+    }
+  >;
+  timestamp: number;
+}
+
+interface SysdigMetricsResponse {
+  sysdig_metrics: Record<
+    string,
+    {
+      cpu: number;
+      memory: number;
+    }
+  >;
+  timestamp: number;
+}
+
 const app = express();
 const port = Number(process.env.PORT) || 4000;
 const managingBaseUrl = process.env.MANAGING_BASE_URL;
+const sysdigBaseUrl = process.env.SYSDIG_BASE_URL;
 
 const allowedOrigins = ['http://localhost:5173'];
 
@@ -62,7 +87,7 @@ const mockStatus: StatusResponse = {
   backends: [
     { id: 'Backend A', status: 'Healthy', rps: 120, p95: 80, errorRate: 0.01 },
     { id: 'Backend B', status: 'Healthy', rps: 200, p95: 60, errorRate: 0.005 },
-    { id: 'Backend C', status: 'Idle', rps: 0, p95: null, errorRate: null },
+    { id: 'Backend C', status: 'Error', rps: 0, p95: null, errorRate: null },
   ],
 };
 
@@ -80,40 +105,82 @@ const mockMetrics: MetricsResponse = {
   },
 };
 
+const mockSysdigMetrics: SysdigMetricsResponse = {
+  sysdig_metrics: {
+    A: { cpu: 0.02, memory: 0.1 },
+    B: { cpu: 0.02, memory: 0.1 },
+    C: { cpu: 0.02, memory: 0.09 },
+  },
+  timestamp: Math.floor(Date.now() / 1000),
+};
+
 const proxyClient = managingBaseUrl
   ? axios.create({
       baseURL: managingBaseUrl,
       timeout: 5_000,
     })
   : null;
+const sysdigClient = sysdigBaseUrl
+  ? axios.create({
+      baseURL: sysdigBaseUrl,
+      timeout: 5_000,
+    })
+  : null;
 
-app.get('/api/status', async (_req: Request, res: Response) => {
+function mapManagingStatusResponse(data: ManagingStatusResponse): StatusResponse {
+  const backends = Object.keys(data.backend_status).map((id) => {
+    const isUp = data.backend_status[id];
+    const healthFlag = data.health?.[id]?.healthy?.healthy;
+    const isHealthy = healthFlag ?? false;
+
+    const status: BackendStatus = isUp && isHealthy ? 'Healthy' : 'Error';
+
+    return {
+      id: `Backend ${id}`,
+      status,
+      rps: 0,
+      p95: null,
+      errorRate: null,
+    };
+  });
+
+  const activeBackend = backends.find((b) => b.status === 'Healthy')?.id ?? 'None';
+
+  return {
+    timestamp: new Date(data.timestamp * 1000).toISOString(),
+    activeBackend,
+    backends,
+  };
+}
+
+app.get('/status', async (_req: Request, res: Response) => {
   if (!managingBaseUrl || !proxyClient) {
     res.json({ ...mockStatus, timestamp: new Date().toISOString() });
     return;
   }
-
+  
   try {
-    const response = await proxyClient.get<StatusResponse>('/status');
-    res.json(response.data);
+    const response = await proxyClient.get<ManagingStatusResponse>('/status');
+    const statusPayload = mapManagingStatusResponse(response.data);
+    res.json(statusPayload);
   } catch (error) {
     console.error('Error fetching status', error);
     res.status(500).json({ error: 'Failed to fetch status from managing system' });
   }
 });
 
-app.get('/api/metrics', async (_req: Request, res: Response) => {
-  if (!managingBaseUrl || !proxyClient) {
-    res.json(mockMetrics);
+app.get('/sysdig', async (_req: Request, res: Response) => {
+  if (!sysdigBaseUrl || !sysdigClient) {
+    res.json({ ...mockSysdigMetrics, timestamp: Math.floor(Date.now() / 1000) });
     return;
   }
 
   try {
-    const response = await proxyClient.get<MetricsResponse>('/metrics/summary');
+    const response = await sysdigClient.get<SysdigMetricsResponse>('/sysdig');
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching metrics', error);
-    res.status(500).json({ error: 'Failed to fetch metrics from managing system' });
+    console.error('Error fetching Sysdig metrics', error);
+    res.status(500).json({ error: 'Failed to fetch Sysdig metrics' });
   }
 });
 

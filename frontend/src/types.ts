@@ -1,23 +1,31 @@
 export interface BackendInfo {
   id: string;
-  status: 'Healthy' | 'Idle' | 'Degraded' | 'Unknown';
+  status: 'Healthy' | 'Error';
   rps: number;
   p95: number | null;
   errorRate: number | null;
 }
 
-export interface StatusResponse {
-  timestamp: string;
-  activeBackend: string;
-  backends: BackendInfo[];
+export interface ManagingStatusResponse {
+  backend_status: Record<string, boolean>;
+  health: Record<
+    string,
+    {
+      healthy?: {
+        healthy?: boolean;
+      };
+    }
+  >;
+  timestamp: number;
 }
 
-export interface MetricsResponse {
-  windowSeconds: number;
-  totalRps: number;
-  sloLatencyMs: number;
-  p95LatencyMs: number;
-  p99LatencyMs: number;
-  errorRate: number;
-  routeDistribution: Record<string, number>;
+export interface SysdigMetricsResponse {
+  sysdig_metrics: Record<
+    string,
+    {
+      cpu: number;
+      memory: number;
+    }
+  >;
+  timestamp: number;
 }
