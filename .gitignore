@@ -15,7 +15,6 @@ frontend/dist
 frontend/.vite
 backend/node_modules
 backend/dist
-.env
 backend/.env
 frontend/.env
 *.local
