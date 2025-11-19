@@ -58,7 +58,6 @@ interface SysdigMetricsResponse {
 const app = express();
 const port = Number(process.env.PORT) || 4000;
 const managingBaseUrl = process.env.MANAGING_BASE_URL;
-const sysdigBaseUrl = process.env.SYSDIG_BASE_URL;
 
 const allowedOrigins = ['http://localhost:5173'];
 
@@ -120,12 +119,6 @@ const proxyClient = managingBaseUrl
       timeout: 5_000,
     })
   : null;
-const sysdigClient = sysdigBaseUrl
-  ? axios.create({
-      baseURL: sysdigBaseUrl,
-      timeout: 5_000,
-    })
-  : null;
 
 function mapManagingStatusResponse(data: ManagingStatusResponse): StatusResponse {
   const backends = Object.keys(data.backend_status).map((id) => {
@@ -170,13 +163,13 @@ app.get('/status', async (_req: Request, res: Response) => {
 });
 
 app.get('/sysdig', async (_req: Request, res: Response) => {
-  if (!sysdigBaseUrl || !sysdigClient) {
+  if (!managingBaseUrl || !proxyClient) {
     res.json({ ...mockSysdigMetrics, timestamp: Math.floor(Date.now() / 1000) });
     return;
   }
 
   try {
-    const response = await sysdigClient.get<SysdigMetricsResponse>('/sysdig');
+    const response = await proxyClient.get<SysdigMetricsResponse>('/sysdig');
     res.json(response.data);
   } catch (error) {
     console.error('Error fetching Sysdig metrics', error);
