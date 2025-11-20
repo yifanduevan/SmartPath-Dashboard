@@ -19,7 +19,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
 # Include locustfile for workload runner
-COPY src/locustfile.py /app/locustfile.py
+COPY locustfile.py /app/locustfile.py
 
 EXPOSE 4000
 CMD ["npm", "start"]
