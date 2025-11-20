@@ -7,10 +7,15 @@ import { MetricsCharts } from './components/MetricsCharts';
 import { Toolbar } from './components/Toolbar';
 import { useMetrics } from './hooks/useMetrics';
 import { useStatus } from './hooks/useStatus';
+import { useWeight } from './hooks/useWeight';
+import { useUcb } from './hooks/useUcb';
+
 
 function App() {
   const statusQuery = useStatus();
   const metricsQuery = useMetrics();
+  const ucbQuery = useUcb();
+  const weightQuery = useWeight();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedBackendId, setSelectedBackendId] = useState<string | undefined>(undefined);
 
@@ -64,6 +69,14 @@ function App() {
       <MetricsCharts
         sysdigMetrics={metricsQuery.data?.sysdig_metrics}
       />
+      <div className="card mini">
+        <p className="label">UCB</p>
+        <p className="value">{ucbQuery.data ? ucbQuery.data.best_backend /* adjust field */ : '—'}</p>
+      </div>
+      <div className="card mini">
+        <p className="label">Weight</p>
+        <p className="value">{weightQuery.data ? JSON.stringify(weightQuery.data.routing_weights) /* adjust field */ : '—'}</p>
+      </div>
     </div>
   );
 }

@@ -31,26 +31,6 @@ export function BackendGrid({ backends }: BackendGridProps) {
                 </div>
                 <span className={statusClass(backend.status)}>{backend.status}</span>
               </div>
-              <div className="backend-metrics">
-                <div>
-                  <p className="label">RPS</p>
-                  <p className="value">{backend.rps ?? 0}</p>
-                </div>
-                <div>
-                  <p className="label">p95 latency</p>
-                  <p className="value">
-                    {backend.p95 !== null && backend.p95 !== undefined ? `${backend.p95} ms` : '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="label">Error rate</p>
-                  <p className="value">
-                    {backend.errorRate !== null && backend.errorRate !== undefined
-                      ? `${(backend.errorRate * 100).toFixed(2)}%`
-                      : '—'}
-                  </p>
-                </div>
-              </div>
             </div>
           );
         })}

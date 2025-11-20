@@ -1,9 +1,27 @@
+export type BackendStatus = 'Healthy' | 'Error';
+
 export interface BackendInfo {
   id: string;
-  status: 'Healthy' | 'Error';
+  status: BackendStatus;
   rps: number;
   p95: number | null;
   errorRate: number | null;
+}
+
+export interface StatusResponse {
+  timestamp: string;
+  activeBackend: string;
+  backends: BackendInfo[];
+}
+
+export interface MetricsResponse {
+  windowSeconds: number;
+  totalRps: number;
+  sloLatencyMs: number;
+  p95LatencyMs: number;
+  p99LatencyMs: number;
+  errorRate: number;
+  routeDistribution: Record<string, number>;
 }
 
 export interface ManagingStatusResponse {
@@ -25,11 +43,12 @@ export interface SysdigMetricsResponse {
     {
       cpu: number;
       memory: number;
-      latency: number;
     }
   >;
   timestamp: number;
 }
+
+export type WorkloadStatus = 'running' | 'succeeded' | 'failed';
 
 export interface WorkloadRequestBody {
   host: string;
@@ -37,8 +56,6 @@ export interface WorkloadRequestBody {
   spawnRate: number;
   runTimeMinutes: number;
 }
-
-export type WorkloadStatus = 'running' | 'succeeded' | 'failed';
 
 export interface WorkloadJob {
   id: string;
@@ -52,12 +69,14 @@ export interface WorkloadJob {
   csvPrefixPath: string;
   log: string[];
 }
+
 export interface UcbStatsEntry {
   avg_reward: number;
   count: number;
   last_reward: number;
   total_reward: number;
 }
+
 export interface UcbResponse {
   best_backend: string;
   exploration_constant: number;
