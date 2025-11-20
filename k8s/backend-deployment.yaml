@@ -18,6 +18,9 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
+          volumeMounts:
+            - name: workload-reports
+              mountPath: /app/reports
           envFrom:
             - configMapRef:
                 name: smart-path-backend-config
@@ -42,6 +45,9 @@ spec:
               port: 4000
             initialDelaySeconds: 15
             periodSeconds: 20
+      volumes:
+        - name: workload-reports
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
