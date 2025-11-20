@@ -12,5 +12,6 @@ FROM nginx:1.27-alpine
 RUN mkdir -p /var/cache/nginx /var/run /var/log/nginx && \
   chown -R root:0 /var/cache/nginx /var/run /var/log/nginx /etc/nginx/conf.d /usr/share/nginx/html && \
   chmod -R g+rwX /var/cache/nginx /var/run /var/log/nginx /etc/nginx/conf.d /usr/share/nginx/html
+COPY default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
+EXPOSE 8080
