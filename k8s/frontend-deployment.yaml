@@ -46,7 +46,8 @@ spec:
   selector:
     app: smart-path-frontend
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8080
       protocol: TCP
 ---
@@ -59,6 +60,6 @@ spec:
     kind: Service
     name: smart-path-frontend
   port:
-    targetPort: 80
+    targetPort: http
   tls:
     termination: edge
