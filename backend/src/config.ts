@@ -20,7 +20,7 @@ function parseCsvEnv(value?: string) {
 }
 
 export function loadConfig(): AppConfig {
-  const projectRoot = path.resolve(__dirname, '..', '..');
+  const projectRoot = path.resolve(__dirname, '..');
   const workloadOutputDir = process.env.WORKLOAD_OUTPUT_DIR
     ? path.resolve(projectRoot, process.env.WORKLOAD_OUTPUT_DIR)
     : projectRoot;
