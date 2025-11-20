@@ -4,7 +4,8 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 # Override at build time if you need a different backend host
-ARG VITE_BACKEND_BASE_URL=http://backend:4000
+# Default to the in-cluster Service name/port
+ARG VITE_BACKEND_BASE_URL=http://smart-path-backend:4000
 ENV VITE_BACKEND_BASE_URL=$VITE_BACKEND_BASE_URL
 RUN npm run build
 
