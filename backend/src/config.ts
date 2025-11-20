@@ -28,6 +28,12 @@ export function loadConfig(): AppConfig {
   if (!fs.existsSync(workloadOutputDir)) {
     fs.mkdirSync(workloadOutputDir, { recursive: true });
   }
+  const envLocustPath = process.env.LOCUST_FILE_PATH;
+  const locustFilePath = envLocustPath
+    ? (path.isAbsolute(envLocustPath)
+        ? envLocustPath
+        : path.resolve(projectRoot, envLocustPath))
+    : path.resolve(projectRoot, 'locustfile.py');
 
   return {
     port: Number(process.env.PORT) || 4000,
@@ -36,7 +42,7 @@ export function loadConfig(): AppConfig {
     allowedWorkloadHosts: parseCsvEnv(process.env.WORKLOAD_ALLOWED_HOSTS),
     locustBinary: process.env.LOCUST_BIN ?? 'locust',
     projectRoot,
-    locustFilePath: process.env.LOCUST_FILE_PATH ?? path.resolve(projectRoot, 'locustfile.py'),
+    locustFilePath,
     workloadOutputDir,
   };
 }
