@@ -5,7 +5,7 @@ RUN npm ci
 COPY . .
 # Override at build time if you need a different backend host
 # Default to the in-cluster Service name/port
-ARG VITE_BACKEND_BASE_URL=http://smart-path-backend:4000
+ARG VITE_BACKEND_BASE_URL=https://smart-path-backend-acmeair-group3.mycluster-ca-tor-1-835845-04e8c71ff333c8969bc4cbc5a77a70f6-0000.ca-tor.containers.appdomain.cloud
 ENV VITE_BACKEND_BASE_URL=$VITE_BACKEND_BASE_URL
 RUN npm run build
 
