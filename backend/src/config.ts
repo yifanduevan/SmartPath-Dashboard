@@ -22,8 +22,11 @@ function parseCsvEnv(value?: string) {
 export function loadConfig(): AppConfig {
   const projectRoot = path.resolve(__dirname, '..', '..');
   const workloadOutputDir = process.env.WORKLOAD_OUTPUT_DIR
-    ? path.resolve(process.env.WORKLOAD_OUTPUT_DIR)
+    ? path.resolve(projectRoot, process.env.WORKLOAD_OUTPUT_DIR)
     : projectRoot;
+  const locustFilePath = process.env.LOCUST_FILE_PATH
+    ? path.resolve(projectRoot, process.env.LOCUST_FILE_PATH)
+    : path.resolve(projectRoot, 'locustfile.py');
 
   if (!fs.existsSync(workloadOutputDir)) {
     fs.mkdirSync(workloadOutputDir, { recursive: true });
@@ -36,7 +39,7 @@ export function loadConfig(): AppConfig {
     allowedWorkloadHosts: parseCsvEnv(process.env.WORKLOAD_ALLOWED_HOSTS),
     locustBinary: process.env.LOCUST_BIN ?? 'locust',
     projectRoot,
-    locustFilePath: process.env.LOCUST_FILE_PATH ?? path.resolve(projectRoot, 'locustfile.py'),
+    locustFilePath,
     workloadOutputDir,
   };
 }

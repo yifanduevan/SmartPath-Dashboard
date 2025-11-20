@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smart-path-backend-config
+data:
+  PORT: "4000"
+  MANAGING_BASE_URL: "https://adaptive-analyzer-acmeair-group3.mycluster-ca-tor-1-835845-04e8c71ff333c8969bc4cbc5a77a70f6-0000.ca-tor.containers.appdomain.cloud"
+  LOCUST_FILE_PATH: "./locustfile.py"
+  WORKLOAD_OUTPUT_DIR: "./reports"
+  LOCUST_BIN: ".venv/bin/locust"
+  WORKLOAD_ALLOWED_HOSTS: "https://adaptive-gateway-acmeair-group3.mycluster-ca-tor-1-835845-04e8c71ff333c8969bc4cbc5a77a70f6-0000.ca-tor.containers.appdomain.cloud"

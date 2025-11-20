@@ -1,0 +1,68 @@
+name: Build and Deploy to OpenShift
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY_HOST: default-route-openshift-image-registry.mycluster-ca-tor-1-835845-04e8c71ff333c8969bc4cbc5a77a70f6-0000.ca-tor.containers.appdomain.cloud
+  NAMESPACE: acmeair-group3
+  BACKEND_IMAGE_NAME: smart-path-backend
+  FRONTEND_IMAGE_NAME: smart-path-frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install oc
+        uses: redhat-actions/oc-installer@v1
+        with:
+          version: "4.15"
+
+      - name: Login to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ env.NAMESPACE }}
+
+      - name: Determine image tags
+        id: vars
+        run: |
+          TAG=$(git rev-parse --short HEAD)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "backend_image=${REGISTRY_HOST}/${NAMESPACE}/${BACKEND_IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
+          echo "frontend_image=${REGISTRY_HOST}/${NAMESPACE}/${FRONTEND_IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Docker login to OpenShift registry
+        run: |
+          TOKEN=$(oc whoami -t)
+          echo "$TOKEN" | docker login ${REGISTRY_HOST} -u openshift --password-stdin
+
+      - name: Build and push backend image
+        run: |
+          docker build -t ${{ steps.vars.outputs.backend_image }} -t ${REGISTRY_HOST}/${NAMESPACE}/${BACKEND_IMAGE_NAME}:latest backend
+          docker push ${{ steps.vars.outputs.backend_image }}
+          docker push ${REGISTRY_HOST}/${NAMESPACE}/${BACKEND_IMAGE_NAME}:latest
+
+      - name: Build and push frontend image
+        run: |
+          docker build -t ${{ steps.vars.outputs.frontend_image }} -t ${REGISTRY_HOST}/${NAMESPACE}/${FRONTEND_IMAGE_NAME}:latest frontend
+          docker push ${{ steps.vars.outputs.frontend_image }}
+          docker push ${REGISTRY_HOST}/${NAMESPACE}/${FRONTEND_IMAGE_NAME}:latest
+
+      - name: Apply manifests
+        run: |
+          oc apply -f k8s/backend-configmap.yaml
+          oc apply -f k8s/backend-secret.yaml
+          oc apply -f k8s/backend-deployment.yaml
+          oc apply -f k8s/frontend-deployment.yaml
+
+      - name: Update deployments to new images
+        run: |
+          oc set image deployment/smart-path-backend backend=${{ steps.vars.outputs.backend_image }}
+          oc set image deployment/smart-path-frontend frontend=${{ steps.vars.outputs.frontend_image }}
