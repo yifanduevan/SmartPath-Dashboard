@@ -20,7 +20,8 @@ function parseCsvEnv(value?: string) {
 }
 
 export function loadConfig(): AppConfig {
-  const projectRoot = path.resolve(__dirname, '..', '..');
+  const projectRoot = path.resolve(__dirname, "..", "..");
+
   const workloadOutputDir = process.env.WORKLOAD_OUTPUT_DIR
     ? path.resolve(projectRoot, process.env.WORKLOAD_OUTPUT_DIR)
     : projectRoot;
@@ -29,18 +30,25 @@ export function loadConfig(): AppConfig {
     fs.mkdirSync(workloadOutputDir, { recursive: true });
   }
   const envLocustPath = process.env.LOCUST_FILE_PATH;
-  const locustFilePath = envLocustPath
-    ? (path.isAbsolute(envLocustPath)
-        ? envLocustPath
-        : path.resolve(projectRoot, envLocustPath))
-    : path.resolve(projectRoot, 'locustfile.py');
+
+  let locustFilePath: string;
+  if (!envLocustPath) {
+    // default: <projectRoot>/locustfile.py
+    locustFilePath = path.join(projectRoot, "locustfile.py");
+  } else if (path.isAbsolute(envLocustPath)) {
+    // e.g. "/app/locustfile.py" → use as-is
+    locustFilePath = envLocustPath;
+  } else {
+    // e.g. "locustfile.py" or "./locustfile.py" → resolve under projectRoot
+    locustFilePath = path.join(projectRoot, envLocustPath);
+  }
 
   return {
     port: Number(process.env.PORT) || 4000,
     managingBaseUrl: process.env.MANAGING_BASE_URL,
     workloadApiKey: process.env.WORKLOAD_API_KEY,
     allowedWorkloadHosts: parseCsvEnv(process.env.WORKLOAD_ALLOWED_HOSTS),
-    locustBinary: process.env.LOCUST_BIN ?? 'locust',
+    locustBinary: process.env.LOCUST_BIN ?? "locust",
     projectRoot,
     locustFilePath,
     workloadOutputDir,
