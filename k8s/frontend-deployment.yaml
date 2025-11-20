@@ -15,7 +15,7 @@ spec:
       containers:
         - name: frontend
           image: image-registry.openshift-image-registry.svc:5000/acmeair-group3/smart-path-frontend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           readinessProbe:
