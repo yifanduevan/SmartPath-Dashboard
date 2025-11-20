@@ -11,6 +11,7 @@ env:
   NAMESPACE: acmeair-group3
   BACKEND_IMAGE_NAME: smart-path-backend
   FRONTEND_IMAGE_NAME: smart-path-frontend
+  OPENSHIFT_SERVER_FALLBACK: https://c104-e.ca-tor.containers.cloud.ibm.com:30689
 
 jobs:
   build-and-deploy:
@@ -27,10 +28,10 @@ jobs:
       - name: Login to OpenShift
         uses: redhat-actions/oc-login@v1
         with:
-          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER || env.OPENSHIFT_SERVER_FALLBACK }}
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
           namespace: ${{ env.NAMESPACE }}
-          skip_tls_verify: true
+          insecure_skip_tls_verify: true
 
       - name: Determine image tags
         id: vars
