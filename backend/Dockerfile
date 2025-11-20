@@ -12,7 +12,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Install locust and python runtime used by workload runner
 RUN apk add --no-cache python3 py3-pip && \
-  pip install --no-cache-dir locust
+  PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir locust
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
