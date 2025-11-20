@@ -22,7 +22,7 @@ jobs:
       - name: Install oc
         uses: redhat-actions/oc-installer@v1
         with:
-          oc_version: "4.15"
+          oc_version: "4.15.0"
 
       - name: Login to OpenShift
         uses: redhat-actions/oc-login@v1
@@ -30,6 +30,7 @@ jobs:
           openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
           namespace: ${{ env.NAMESPACE }}
+          skip_tls_verify: true
 
       - name: Determine image tags
         id: vars
