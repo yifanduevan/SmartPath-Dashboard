@@ -18,5 +18,7 @@ RUN apk add --no-cache python3 py3-pip python3-dev build-base libffi-dev openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
+# Include locustfile for workload runner
+COPY locustfile.py ./locustfile.py
 EXPOSE 4000
 CMD ["npm", "start"]
