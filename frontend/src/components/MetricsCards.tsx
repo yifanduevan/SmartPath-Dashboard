@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { getWorkloadJob, triggerWorkload } from '../api/client';
+import { useUcb } from '../hooks/useUcb';
 import type { BackendInfo, SysdigMetricsResponse, WorkloadJob } from '../types';
+import { Ucb } from './Ucb';
 
 interface MetricsCardsProps {
   activeBackends: BackendInfo[];
@@ -55,6 +57,7 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [lastJob, setLastJob] = useState<WorkloadJob | null>(null);
+  const ucbQuery = useUcb();
 
   useEffect(() => {
     if (!activeJobId) {
@@ -170,6 +173,7 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
           <p className="label">Last Metrics Update</p>
           <p className="value">{timestamp ?? '—'}</p>
         </div>
+        <Ucb best_backend={ucbQuery.data?.best_backend ?? null} exploration_constant={ucbQuery.data?.exploration_constant ?? 0} total_pulls={ucbQuery.data?.total_pulls ?? 0} />
       </div>
       <div className="card" style={{ gridColumn: 'span 2' }}>
         <div className="card-header">

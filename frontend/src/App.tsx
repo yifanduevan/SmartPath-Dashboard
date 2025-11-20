@@ -9,6 +9,8 @@ import { useMetrics } from './hooks/useMetrics';
 import { useStatus } from './hooks/useStatus';
 import { useWeight } from './hooks/useWeight';
 import { useUcb } from './hooks/useUcb';
+import { Ucb } from './components/Ucb';
+import { WeightCharts } from './components/WeightChart';
 
 
 function App() {
@@ -66,17 +68,12 @@ function App() {
         metrics={metricsQuery.data}
       />
       <BackendGrid backends={statusQuery.data?.backends ?? []} />
+      <WeightCharts
+        routing_weights={weightQuery.data?.routing_weights ?? {}}
+      />
       <MetricsCharts
         sysdigMetrics={metricsQuery.data?.sysdig_metrics}
       />
-      <div className="card mini">
-        <p className="label">UCB</p>
-        <p className="value">{ucbQuery.data ? ucbQuery.data.best_backend /* adjust field */ : '—'}</p>
-      </div>
-      <div className="card mini">
-        <p className="label">Weight</p>
-        <p className="value">{weightQuery.data ? JSON.stringify(weightQuery.data.routing_weights) /* adjust field */ : '—'}</p>
-      </div>
     </div>
   );
 }

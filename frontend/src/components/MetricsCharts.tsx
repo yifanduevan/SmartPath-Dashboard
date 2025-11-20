@@ -41,7 +41,7 @@ export function MetricsCharts({ sysdigMetrics }: MetricsChartsProps) {
         <div className="chart-block">
           <div className="card-header">
             <h3>Memory Distribution</h3>
-            <p className="muted">Share of memory usage per backend.</p>
+            <p className="muted">Share of memory usage per backend</p>
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
