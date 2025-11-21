@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { getWorkloadJob, triggerWorkload } from '../api/client';
+import { getWorkloadJob, getWorkloadStatsHistory, triggerWorkload } from '../api/client';
 import { useUcb } from '../hooks/useUcb';
-import type { BackendInfo, SysdigMetricsResponse, WorkloadJob } from '../types';
+import type { BackendInfo, SysdigMetricsResponse, WorkloadJob, WorkloadStatsPoint } from '../types';
 import { Ucb } from './Ucb';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface MetricsCardsProps {
   activeBackends: BackendInfo[];
@@ -57,7 +58,11 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [lastJob, setLastJob] = useState<WorkloadJob | null>(null);
+  const [failureSeries, setFailureSeries] = useState<WorkloadStatsPoint[]>([]);
+  const [failureSeriesError, setFailureSeriesError] = useState<string | null>(null);
+  const [isLoadingFailures, setIsLoadingFailures] = useState(false);
   const ucbQuery = useUcb();
+  const formatedStatus = lastJob?.status == 'running' ? 'Running' : lastJob?.status == 'succeeded' ? 'Finished Without Errors' : lastJob?.status == 'failed' ? 'Finished With Request Errors' : null;
 
   useEffect(() => {
     if (!activeJobId) {
@@ -130,6 +135,63 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  useEffect(() => {
+    if (!lastJob) {
+      setFailureSeries([]);
+      setFailureSeriesError(null);
+      setIsLoadingFailures(false);
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: number | undefined;
+
+    const fetchSeries = async () => {
+      if (cancelled) return;
+      setIsLoadingFailures(true);
+      setFailureSeriesError(null);
+      try {
+        const data = await getWorkloadStatsHistory(lastJob.id);
+        if (cancelled) return;
+        const sorted = [...data].sort((a, b) => a.timestampMs - b.timestampMs);
+        setFailureSeries(sorted);
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'Failed to load failure trend.';
+        setFailureSeriesError(message);
+        setFailureSeries([]);
+      } finally {
+        if (cancelled) return;
+        setIsLoadingFailures(false);
+        if (lastJob.status === 'running') {
+          timeoutId = window.setTimeout(fetchSeries, workloadPollIntervalMs);
+        }
+      }
+    };
+
+    // reset series when switching jobs
+    setFailureSeries([]);
+    fetchSeries();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [lastJob?.id, lastJob?.status]);
+
+  const renderFailuresTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const point = payload[0].payload as WorkloadStatsPoint;
+    return (
+      <div className="tooltip-card">
+        <div className="tooltip-row">Time: {new Date(point.timestampMs).toLocaleTimeString()}</div>
+        <div className="tooltip-row">Total failures: {point.totalFailureCount}</div>
+      </div>
+    );
   };
 
   return (
@@ -244,7 +306,7 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
         {lastJob && (
           <div style={{ marginTop: 10 }}>
             <p className="value">
-              {lastJob.status.toUpperCase()} · {lastJob.params.users} users @ {lastJob.params.spawnRate}/s for {lastJob.params.runTimeMinutes}m
+              {formatedStatus} · {lastJob.params.users} users @ {lastJob.params.spawnRate}/s for {lastJob.params.runTimeMinutes}m
             </p>
             <p className="muted">Job ID: {lastJob.id}</p>
             {lastJob.errorMessage && <p className="muted">Error: {lastJob.errorMessage}</p>}
@@ -252,6 +314,37 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
         )}
       </div>
     </section>
+
+    {lastJob && (
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="card-header">
+          <h3>Failures Over Time</h3>
+          <span className="muted">Job {lastJob.id}</span>
+        </div>
+        {isLoadingFailures && <p className="muted">Loading failure trend…</p>}
+        {!isLoadingFailures && failureSeries.length === 0 && !failureSeriesError && (
+          <p className="muted">No stats history found for this job yet.</p>
+        )}
+        {failureSeriesError && <p className="muted">Loading Chart...</p>}
+        {!isLoadingFailures && failureSeries.length > 0 && (
+          <div style={{ width: '100%', height: 280 }}>
+            <ResponsiveContainer>
+              <LineChart data={failureSeries} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="timestampMs"
+                  tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                  minTickGap={30}
+                />
+                <YAxis allowDecimals={false} />
+                <Tooltip content={renderFailuresTooltip} />
+                <Line type="monotone" dataKey="totalFailureCount" stroke="#ef4444" dot={false} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    )}
     </div>
   );
 }

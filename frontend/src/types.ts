@@ -52,6 +52,11 @@ export interface WorkloadJob {
   csvPrefixPath: string;
   log: string[];
 }
+
+export interface WorkloadStatsPoint {
+  timestampMs: number;
+  totalFailureCount: number;
+}
 export interface UcbStatsEntry {
   avg_reward: number;
   count: number;

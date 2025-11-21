@@ -6,6 +6,7 @@ import type {
   WorkloadStatus,
   UcbResponse,
   WeightResponse,
+  WorkloadStatsPoint,
 } from '../types';
 
 const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL as string | undefined) ?? 'http://localhost:4000';
@@ -54,6 +55,41 @@ export async function getWorkloadJob(jobId: string): Promise<WorkloadJob> {
     headers: buildHeaders(),
   });
   return handleResponse<WorkloadJob>(response);
+}
+
+function parseStatsHistoryCsv(text: string): WorkloadStatsPoint[] {
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+  const timestampIdx = headers.indexOf('timestamp');
+  const failureIdx = headers.indexOf('total failure count');
+  if (timestampIdx === -1 || failureIdx === -1) return [];
+
+  return lines.slice(1).reduce<WorkloadStatsPoint[]>((acc, line) => {
+    const cells = line.split(',');
+    const timestampRaw = Number(cells[timestampIdx]);
+    const failuresRaw = Number(cells[failureIdx]);
+    if (!Number.isFinite(timestampRaw) || !Number.isFinite(failuresRaw)) {
+      return acc;
+    }
+    acc.push({
+      timestampMs: timestampRaw * 1000,
+      totalFailureCount: failuresRaw,
+    });
+    return acc;
+  }, []);
+}
+
+export async function getWorkloadStatsHistory(jobId: string): Promise<WorkloadStatsPoint[]> {
+  const response = await fetch(`${normalizedBaseUrl}/workload/${jobId}/report/stats_history`, {
+    headers: buildHeaders(),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || 'Failed to fetch stats history');
+  }
+  return parseStatsHistoryCsv(text);
 }
 
 export async function getUcb(): Promise<UcbResponse> {
