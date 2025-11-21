@@ -133,6 +133,7 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
   };
 
   return (
+    <div>
     <section className="metrics-row">
       <div className="card highlight">
         <div className="card-header">
@@ -238,13 +239,10 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
             <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Starting…' : 'Start Workload'}
             </button>
-            {statusMessage && <span className="muted">{statusMessage}</span>}
-            {errorMessage && <span className="muted">Error: {errorMessage}</span>}
           </div>
         </form>
         {lastJob && (
-          <div className="workload-status">
-            <p className="label">Last Workload</p>
+          <div style={{ marginTop: 10 }}>
             <p className="value">
               {lastJob.status.toUpperCase()} · {lastJob.params.users} users @ {lastJob.params.spawnRate}/s for {lastJob.params.runTimeMinutes}m
             </p>
@@ -254,5 +252,6 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
         )}
       </div>
     </section>
+    </div>
   );
 }
