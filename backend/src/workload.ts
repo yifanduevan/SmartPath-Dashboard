@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import fs from 'fs';
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import path from 'path';
 import type { Request, Response } from 'express';
@@ -146,5 +147,44 @@ export function registerWorkloadRoutes(app: any, config: AppConfig) {
     }
 
     res.json(job);
+  });
+
+  app.get('/workload/:jobId/report/:kind', (req: Request, res: Response) => {
+    if (!requireWorkloadAuth(req, res, config.workloadApiKey)) return;
+
+    const job = workloadJobs.get(req.params.jobId);
+    if (!job) {
+      res.status(404).json({ error: 'Workload not found' });
+      return;
+    }
+
+    const csvFiles: Record<string, string> = {
+      stats: `${job.csvPrefixPath}_stats.csv`,
+      stats_history: `${job.csvPrefixPath}_stats_history.csv`,
+      failures: `${job.csvPrefixPath}_failures.csv`,
+    };
+
+    let filePath: string | undefined;
+    if (req.params.kind === 'html') {
+      filePath = job.htmlReportPath;
+    } else {
+      filePath = csvFiles[req.params.kind];
+    }
+
+    if (!filePath) {
+      res.status(400).json({ error: 'Unknown report type' });
+      return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ error: 'Report file not found' });
+      return;
+    }
+
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        res.status(500).json({ error: 'Failed to send report file' });
+      }
+    });
   });
 }
