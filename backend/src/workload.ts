@@ -69,7 +69,10 @@ function buildLocustArgs(params: WorkloadRequestBody, locustFilePath: string, ht
 
 function requireWorkloadAuth(req: Request, res: Response, apiKey?: string) {
   if (!apiKey) return true;
-  if (req.get('x-api-key') !== apiKey) {
+  const queryKey = typeof req.query.api_key === 'string' ? req.query.api_key : undefined;
+  const providedKey = req.get('x-api-key') ?? queryKey;
+
+  if (providedKey !== apiKey) {
     res.status(401).json({ error: 'Unauthorized' });
     return false;
   }
