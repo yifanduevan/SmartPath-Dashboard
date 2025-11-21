@@ -314,12 +314,10 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
         )}
       </div>
     </section>
-
-    {lastJob && (
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-header">
           <h3>Failures Over Time</h3>
-          <span className="muted">Job {lastJob.id}</span>
+          <span className="muted">Job {lastJob?.id}</span>
         </div>
         {isLoadingFailures && <p className="muted">Loading failure trend…</p>}
         {!isLoadingFailures && failureSeries.length === 0 && !failureSeriesError && (
@@ -344,7 +342,6 @@ export function MetricsCards({ activeBackends, selectedBackendId, onSelectBacken
           </div>
         )}
       </div>
-    )}
     </div>
   );
 }
