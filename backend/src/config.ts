@@ -10,6 +10,7 @@ export interface AppConfig {
   projectRoot: string;
   locustFilePath: string;
   workloadOutputDir: string;
+  graphMetricsBaseUrl?: string;
 }
 
 function parseCsvEnv(value?: string) {
@@ -52,5 +53,6 @@ export function loadConfig(): AppConfig {
     projectRoot,
     locustFilePath,
     workloadOutputDir,
+    graphMetricsBaseUrl: process.env.GRAPH_METRICS_BASE_URL,
   };
 }

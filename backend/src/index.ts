@@ -4,6 +4,7 @@ import express from 'express';
 import { loadConfig } from './config';
 import { registerStatusRoutes } from './statusRoutes';
 import { registerWorkloadRoutes } from './workload';
+import { registerGraphMetricsRoutes } from './graphMetricsRoutes';
 
 dotenv.config();
 
@@ -32,11 +33,13 @@ app.use(
 app.use(express.json());
 
 app.get('/', (_req, res) => {
-  res.json({ ok: true, endpoints: ['/status', '/sysdig', '/health', '/ucb', '/weight'] });
+  res.json({ ok: true, endpoints: ['/status', '/sysdig', '/health', '/ucb', '/weight', '/graph-metrics'] });
 });
 
 registerStatusRoutes(app, config);
 registerWorkloadRoutes(app, config);
+registerGraphMetricsRoutes(app, config);
+
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
