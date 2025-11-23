@@ -7,6 +7,7 @@ import type {
   UcbResponse,
   WeightResponse,
   WorkloadStatsPoint,
+  GraphMetricsResponse,
 } from '../types';
 
 const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL as string | undefined) ?? 'http://localhost:4000';
@@ -100,4 +101,9 @@ export async function getUcb(): Promise<UcbResponse> {
 export async function getWeight(): Promise<WeightResponse> {
   const response = await fetch(`${normalizedBaseUrl}/weight`);
   return handleResponse<WeightResponse>(response);
+}
+
+export async function getGraphMetrics(): Promise<GraphMetricsResponse> {
+  const response = await fetch(`${normalizedBaseUrl}/graph-metrics`);
+  return handleResponse<GraphMetricsResponse>(response);
 }

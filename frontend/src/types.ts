@@ -1,9 +1,9 @@
 export interface BackendInfo {
   id: string;
   status: 'Healthy' | 'Error';
-  rps: number;
-  p95: number | null;
-  errorRate: number | null;
+  totalRequests: number;
+  success: number | null;
+  failureRate: number | null;
 }
 
 export interface ManagingStatusResponse {
@@ -74,4 +74,32 @@ export interface UcbResponse {
 export interface WeightResponse {
   routing_weights: Record<string, number>;
   timestamp: number;
+}
+
+export interface GraphMetricsBackendErrors {
+  '4xx_errors': number;
+  '5xx_errors': number;
+  connection_errors: number;
+  failure_rate: number;
+  failures: number;
+  recent_window_size: number;
+  success: number;
+  timeouts: number;
+  total_requests: number;
+}
+
+export interface GraphMetricsResponse {
+  backend_errors: Record<string, GraphMetricsBackendErrors>;
+  backend_status: Record<string, boolean>;
+  error_tracking_age: number;
+  health: Record<
+    string,
+    {
+      healthy?: {
+        healthy?: boolean;
+      };
+    }
+  >;
+  routing_weights: Record<string, number>;
+  ucb_cache_age: number;
 }
