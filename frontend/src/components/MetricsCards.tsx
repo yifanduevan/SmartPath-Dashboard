@@ -13,7 +13,7 @@ interface MetricsCardsProps {
   metrics?: SysdigMetricsResponse;
 }
 
-const defaultWorkloadHost = (import.meta.env.VITE_DEFAULT_WORKLOAD_HOST as string | undefined) ?? '';
+const defaultWorkloadHost = (import.meta.env.VITE_DEFAULT_WORKLOAD_HOST as string | undefined) ?? 'https://adaptive-gateway-acmeair-group3.mycluster-ca-tor-1-835845-04e8c71ff333c8969bc4cbc5a77a70f6-0000.ca-tor.containers.appdomain.cloud';
 const workloadPollIntervalMs = 4000;
 
 function badgeClass(status: BackendInfo['status'] | undefined) {
